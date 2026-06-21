@@ -78,6 +78,9 @@
 #include "libavdevice/avdevice.h"
 
 #include "cmdutils.h"
+#if FF_MULTICALL
+#include "ffmain.h"
+#endif
 #if CONFIG_MEDIACODEC
 #include "compat/android/binder.h"
 #endif
@@ -86,8 +89,10 @@
 #include "ffmpeg_utils.h"
 #include "graph/graphprint.h"
 
-const char program_name[] = "ffmpeg";
-const int program_birth_year = 2000;
+#ifndef FF_MULTICALL
+const char *program_name = "ffmpeg";
+int program_birth_year = 2000;
+#endif
 
 FILE *vstats_file;
 
@@ -978,7 +983,11 @@ static int64_t getmaxrss(void)
 #endif
 }
 
+#if FF_MULTICALL
+int ffmpeg_main(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
 {
     Scheduler *sch = NULL;
 

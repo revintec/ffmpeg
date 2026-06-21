@@ -30,6 +30,9 @@
 #include "ffmpeg.h"
 #include "ffmpeg_sched.h"
 #include "cmdutils.h"
+#if FF_MULTICALL
+#include "ffmain.h"
+#endif
 #include "opt_common.h"
 
 #include "libavformat/avformat.h"
@@ -1307,7 +1310,11 @@ static int opt_filter_complex_script(void *optctx, const char *opt, const char *
 }
 #endif
 
+#if FF_MULTICALL
+void ffmpeg_show_help_default(const char *opt, const char *arg)
+#else
 void show_help_default(const char *opt, const char *arg)
+#endif
 {
     int show_advanced = 0, show_avoptions = 0;
 

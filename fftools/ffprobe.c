@@ -67,6 +67,9 @@
 #include "libavfilter/version.h"
 #include "textformat/avtextformat.h"
 #include "cmdutils.h"
+#if FF_MULTICALL
+#include "ffmain.h"
+#endif
 #include "opt_common.h"
 
 #include "libavutil/thread.h"
@@ -90,8 +93,10 @@ typedef struct InputFile {
     int       nb_streams;
 } InputFile;
 
-const char program_name[] = "ffprobe";
-const int program_birth_year = 2007;
+#ifndef FF_MULTICALL
+const char *program_name = "ffprobe";
+int program_birth_year = 2007;
+#endif
 
 static int do_analyze_frames = 0;
 static int do_bitexact = 0;
@@ -3042,7 +3047,11 @@ static int opt_print_filename(void *optctx, const char *opt, const char *arg)
     return print_input_filename ? 0 : AVERROR(ENOMEM);
 }
 
+#if FF_MULTICALL
+void ffprobe_show_help_default(const char *opt, const char *arg)
+#else
 void show_help_default(const char *opt, const char *arg)
+#endif
 {
     av_log_set_callback(log_callback_help);
     show_usage();
@@ -3363,7 +3372,18 @@ static inline int check_section_show_entries(int section_id)
             do_show_##varname = 1;                                      \
     } while (0)
 
+#if FF_MULTICALL
+/* Expose the ffprobe option table to the multi-call dispatcher so it can
+ * recognise ffprobe-specific options while classifying the command line. */
+const OptionDef *ffprobe_get_options(void)
+{
+    return real_options;
+}
+
+int ffprobe_main(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
 {
     const AVTextFormatter *f;
     AVTextFormatContext *tctx;

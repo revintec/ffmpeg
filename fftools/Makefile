@@ -1,6 +1,15 @@
+# When both ffmpeg and ffprobe are enabled they are merged into a single
+# multi-call binary (named "ffmpeg") that dispatches to either tool based on
+# how it is invoked. In that case ffprobe is not built as a separate program.
+ifeq ($(CONFIG_FFMPEG)$(CONFIG_FFPROBE),yesyes)
+FF_MULTICALL = yes
+endif
+
 AVPROGS-$(CONFIG_FFMPEG)   += ffmpeg
 AVPROGS-$(CONFIG_FFPLAY)   += ffplay
+ifneq ($(FF_MULTICALL), yes)
 AVPROGS-$(CONFIG_FFPROBE)  += ffprobe
+endif
 
 AVPROGS     := $(AVPROGS-yes:%=%$(PROGSSUF)$(EXESUF))
 PROGS       += $(AVPROGS)
@@ -54,6 +63,12 @@ OBJS-ffprobe +=                       \
 OBJS-ffmpeg += $(COMPAT_OBJS:%=compat/%)
 OBJS-ffplay += fftools/ffplay_renderer.o
 
+# Merge ffprobe and the multi-call dispatcher into the ffmpeg binary.
+ifeq ($(FF_MULTICALL), yes)
+OBJS-ffmpeg += fftools/ffprobe.o fftools/ffmain.o
+CFLAGS-ffmpeg += -DFF_MULTICALL=1
+endif
+
 define DOFFTOOL
 OBJS-$(1) += fftools/cmdutils.o fftools/opt_common.o fftools/$(1).o $(OBJS-$(1)-yes)
 ifdef HAVE_GNU_WINDRES
@@ -87,6 +102,9 @@ install-progs-$(CONFIG_SHARED): install-libs
 install-progs: install-progs-yes $(AVPROGS)
 	$(Q)mkdir -p "$(BINDIR)"
 	$(INSTALL) -c -m 755 $(AVPROGS) "$(BINDIR)"
+ifeq ($(FF_MULTICALL), yes)
+	$(Q)cd "$(BINDIR)" && $(LN_S) ffmpeg$(PROGSSUF)$(EXESUF) ffprobe$(PROGSSUF)$(EXESUF)
+endif
 
 uninstall: uninstall-progs
 

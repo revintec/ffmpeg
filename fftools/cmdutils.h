@@ -36,13 +36,17 @@
 
 /**
  * program name, defined by the program for show_version().
+ *
+ * This is a pointer (rather than an array) so that a multi-call binary
+ * combining several tools (e.g. ffmpeg + ffprobe) can switch the active
+ * program identity at runtime before dispatching to the selected tool.
  */
-extern const char program_name[];
+extern const char *program_name;
 
 /**
  * program birth year, defined by the program for show_banner()
  */
-extern const int program_birth_year;
+extern int program_birth_year;
 
 extern AVDictionary *sws_dict;
 extern AVDictionary *swr_opts;
