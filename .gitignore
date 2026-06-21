@@ -37,6 +37,7 @@
 .\#*
 /.config
 /.version
+/ffhls
 /ffmpeg
 /ffplay
 /ffprobe
