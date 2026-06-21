@@ -4499,6 +4499,13 @@ enable $EXTRALIBS_LIST
 # Avoid external, non-system, libraries getting enabled by dependency resolution
 disable $EXTERNAL_LIBRARY_LIST $HWACCEL_LIBRARY_LIST
 
+# Enable the Fraunhofer FDK AAC encoder/decoder (libfdk_aac) by default so it
+# is always linked into the resulting binaries. fdk-aac is not redistributable,
+# so the nonfree license flag is required for it to be usable. Both can still be
+# turned off explicitly with --disable-libfdk-aac on the command line.
+enable nonfree
+enable libfdk_aac
+
 # build settings
 SHFLAGS='-shared -Wl,-soname,$$(@F)'
 LIBPREF="lib"
