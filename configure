@@ -116,6 +116,7 @@ Configuration options:
 Program options:
   --disable-programs       do not build command line programs
   --disable-ffmpeg         disable ffmpeg build
+  --disable-ffhls          disable ffhls build
   --disable-ffplay         disable ffplay build
   --disable-ffprobe        disable ffprobe build
 
@@ -2250,6 +2251,7 @@ LICENSE_LIST="
 "
 
 PROGRAM_LIST="
+    ffhls
     ffplay
     ffprobe
     ffmpeg
@@ -4401,6 +4403,9 @@ ffplay_select="crop_filter transpose_filter hflip_filter vflip_filter rotate_fil
 ffplay_suggest="shell32 libplacebo vulkan"
 ffprobe_deps="avcodec avformat"
 ffprobe_suggest="shell32"
+ffhls_deps="avcodec avformat avfilter swscale swresample pthreads"
+ffhls_select="aresample_filter null_filter anull_filter"
+ffhls_extralibs="pthreads_extralibs"
 
 # documentation
 podpages_deps="perl"

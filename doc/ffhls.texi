@@ -1,0 +1,128 @@
+\input texinfo @c -*- texinfo -*-
+@documentencoding UTF-8
+
+@settitle ffhls Documentation
+@titlepage
+@center @titlefont{ffhls Documentation}
+@end titlepage
+
+@top
+
+@contents
+
+@chapter Synopsis
+
+ffhls -i @file{input} -unix_socket @file{path} [@var{options}]
+
+@chapter Description
+@c man begin DESCRIPTION
+
+@command{ffhls} binds to a local UNIX domain socket and speaks just enough
+HTTP to serve an HLS (HTTP Live Streaming) presentation to a web browser media
+engine. Safari on iOS, iPadOS and macOS plays the stream natively; Chrome and
+Firefox can play it through a Media Source Extensions player such as
+@uref{https://github.com/video-dev/hls.js, hls.js}.
+
+The input media is transcoded to H.264/AAC MPEG-TS segments entirely in memory
+--- nothing is written to disk. Segments are produced @emph{on demand} when the
+client requests them, and a small, adaptive read-ahead window pre-buffers a few
+upcoming segments. The amount of media that is pre-buffered is derived from the
+rate at which the client pulls segments, so a client playing back at up to 4x
+(which drains its buffer faster and therefore requests segments more often) is
+kept fed without wastefully transcoding the whole file ahead of time.
+
+Because the media playlist is a VOD playlist that lists every segment, and each
+segment begins with a forced IDR frame, the client may seek to any position;
+@command{ffhls} simply transcodes the requested segment.
+
+@chapter HTTP endpoints
+@c man begin ENDPOINTS
+
+@table @option
+@item /
+A minimal HTML player page (native HLS, or hls.js where supported).
+@item /master.m3u8
+The HLS master playlist.
+@item /stream.m3u8
+The HLS media (VOD) playlist listing every segment.
+@item /seg-@var{N}.ts
+MPEG-TS segment number @var{N}, transcoded on demand. @code{Range} requests are
+supported.
+@end table
+
+@chapter Options
+@c man begin OPTIONS
+
+@table @option
+@item -i @var{input}
+Input media file or URL (required).
+@item -unix_socket @var{path}
+Path of the UNIX domain socket to bind and listen on (required). Aliases:
+@option{-unix}, @option{-listen}.
+@item -seg_duration @var{seconds}
+Target segment duration. Default 4.
+@item -buffer_segments @var{n}
+Upper bound on the adaptive read-ahead window, in segments. Default 6.
+@item -max_memory @var{mb}
+In-memory segment cache cap, in mebibytes. Default 96.
+@item -lookahead @var{seconds}
+Amount of media time the read-ahead window tries to keep buffered. Default 8.
+@item -vb @var{bps}
+Video bitrate. Default 2000000.
+@item -ab @var{bps}
+Audio bitrate. Default 128000.
+@item -vcodec @var{name}
+Override the H.264 video encoder (default tries @code{libx264} and other H.264
+encoders).
+@end table
+
+@chapter Examples
+@c man begin EXAMPLES
+
+Serve a file and fetch the master playlist with @command{curl}:
+@example
+ffhls -i movie.mkv -unix_socket /tmp/hls.sock &
+curl --unix-socket /tmp/hls.sock http://localhost/master.m3u8
+@end example
+
+A browser cannot open a UNIX socket directly; put a forwarder in front of it,
+for example with @command{socat}:
+@example
+socat TCP-LISTEN:8080,reuseaddr,fork UNIX-CONNECT:/tmp/hls.sock
+@end example
+then open @code{http://localhost:8080/} in the browser.
+
+@c man end
+
+@chapter See Also
+
+@ifhtml
+@ifset config-all
+@url{ffhls.html,ffhls},
+@end ifset
+@ifset config-not-all
+@url{ffhls-all.html,ffhls-all},
+@end ifset
+@url{ffmpeg.html,ffmpeg}, @url{ffplay.html,ffplay}, @url{ffprobe.html,ffprobe}
+@end ifhtml
+
+@ifnothtml
+@ifset config-all
+ffhls(1),
+@end ifset
+@ifset config-not-all
+ffhls-all(1),
+@end ifset
+ffmpeg(1), ffplay(1), ffprobe(1)
+@end ifnothtml
+
+@include authors.texi
+
+@ignore
+
+@setfilename ffhls
+@settitle ffhls in-memory HLS server
+
+@end ignore
+
+@bye
